@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>贪吃蛇面向过程</title>
+	<style>
+		#container{
+			width: 1000px;
+			height: 550px;
+			border: 1px solid #000;
+			margin: 0 auto;
+		}
+		#ground{
+			width: 1000px;
+			height: 500px;
+			background: #ccc;
+			position: relative;
+		}
+		#control{
+			width: 1000px;
+			height: 50px;
+			line-height: 50px;
+			font-family: "微软雅黑";
+		}
+		#brand{
+			float: left;
+		}
+		#buttons{
+			float: right;
+		}
+		.block{
+			width: 20px;
+			height: 20px;
+			background: orange;
+			float: left;
+		}
+		.snake-block{
+			background: red;
+			position: absolute;
+			top: 60px;
+		}
+		.food-block{
+			background: #00f;
+			position: absolute;
+		}
+	</style>
+</head>
+<body>
+	<div id="container">
+		<div id="ground"></div>
+		<div id="control">
+			<div id="brand">贪吃蛇 By 刘鑫</div>
+			<div id="buttons">
+				<button id="btn-start">开始</button>
+				<button id="btn-pause">暂停</button>
+			</div>
+		</div>
+	</div>
+	<script>
+		(function(){
+			//草场对象
+			var ground = {
+				dom:document.getElementById('ground'),
+				createFood : function(){
+					return new Food();
+				}
+			}
+			//蛇对象
+			var snake = {
+				body : [],
+				speed : 300,
+				direction : 'right',
+				move : function(){
+					var snakeHead = this.body[0];
+					var nextPos = null;
+					if(this.direction == 'left'){
+						nextPos = {
+							left: snakeHead.offsetLeft - 20,
+							top: snakeHead.offsetTop
+						};
+					}else if(this.direction == 'top'){
+						nextPos = {
+							left: snakeHead.offsetLeft,
+							top: snakeHead.offsetTop - 20
+						};
+					}else if(this.direction == 'right'){
+						nextPos = {
+							left: snakeHead.offsetLeft + 20,
+							top: snakeHead.offsetTop
+						};
+					}else if(this.direction == 'down'){
+						nextPos = {
+							left: snakeHead.offsetLeft,
+							top: snakeHead.offsetTop + 20
+						};
+					}
+					//撞墙
+			if (nextPos.left<0||nextPos.left>980||nextPos.top<0||nextPos.top>480) {
+					clearInterval(game.timer);
+					alert('Game over!');
+				//5.蛇吃食物、6.身体增长
+			}else if(nextPos.left == ground.food.pos.left && nextPos.top == ground.food.pos.top){
+					ground.food.dom.className = 'block snake-block';
+					ground.food.dom.style.left = snakeHead.offsetLeft + 'px';
+					ground.food.dom.style.top = snakeHead.offsetTop + 'px';
+					snakeHead.style.left = nextPos.left + 'px';
+					snakeHead.style.top = nextPos.top + 'px';
+					this.body.splice(1,0,ground.food.dom);
+					ground.food = ground.createFood();
+				}else{//移动
+					for(var i=0; i<this.body.length; i++){
+						var nowPos = {
+							left: this.body[i].offsetLeft,
+							top: this.body[i].offsetTop
+						};
+						this.body[i].style.left = nextPos.left + 'px';
+						this.body[i].style.top = nextPos.top + 'px';
+						nextPos = nowPos;
+					}
+				}
+				for(var i=4; i<this.body.length; i++){
+					if(this.body[i].offsetLeft == snakeHead.offsetLeft && this.body[i].offsetTop == snakeHead.offsetTop){
+						alert('Game over!');
+						clearInterval(game.timer);
+						//oBtnStart.disabled = false;
+					}
+			}
+			}
+		}
+			//食物类
+			var Food = function(){
+				do{
+					var bFlag = true;//一个标识位，true代表找到合适的食物坐标
+					this.pos = {
+						left : parseInt(Math.random()*50)*20,//0-980
+						top : parseInt(Math.random()*25)*20
+					};
+					
+					for(var i=0; i<snake.body.length;i++){
+						if(snake.body[i].offsetLeft  == this.pos.left&&snake.body[i].offsetTop == this.pos.top){
+							bFlag = false;
+						}
+					}
+				}while(!bFlag);
+				this.dom = document.createElement('div');
+				this.dom.className = 'block food-block';
+				this.dom.style.left = this.pos.left + 'px';
+				this.dom.style.top = this.pos.top + 'px';
+				ground.dom.appendChild(this.dom);
+			}
+			//游戏控制对象
+			var game = {
+				timer : null,
+				init : function(){  //初始化
+					for(var i=0; i<3; i++){
+						var oDiv = document.createElement('div');
+						oDiv.className = 'block snake-block';
+						oDiv.style.left = (3-i)*20 + 'px';
+						ground.dom.appendChild(oDiv);
+						snake.body.push(oDiv);
+					}
+					ground.food = ground.createFood();
+					document.onkeydown = function(ev){
+						var ev = ev || event;
+						var keyCode = ev.which || ev.keyCode;
+						if(keyCode ==  37){//left
+							if(snake.direction != 'right'){
+								snake.direction = 'left';
+							}
+						}else if(keyCode ==  38){//top
+							if(snake.direction != 'down'){
+								snake.direction = 'top';
+							}
+
+						}else if(keyCode ==  39){//right
+							if(snake.direction != 'left'){
+								snake.direction = 'right';
+							}
+
+						}else if(keyCode ==  40){//down
+							if(snake.direction != 'top'){
+								snake.direction = 'down';
+							}
+						}
+						snake.move();
+					};
+					var oBtnStart = document.getElementById('btn-start');
+			oBtnStart.onclick = function(){
+					oBtnStart.disabled = true;
+					game.start();
+					};
+					var oBtnPause = document.getElementById('btn-pause');
+			oBtnPause.onclick = function(){
+					oBtnStart.disabled = false;
+					game.pause();
+					};
+				},
+				start : function(){
+					game.timer = setInterval(function(){
+						snake.move();
+						}, snake.speed);
+				},
+				pause : function(){
+					clearInterval(game.timer);
+				},
+				countScore : function(){
+
+				}
+			}
+			game.init();
+		})();
+	</script>
